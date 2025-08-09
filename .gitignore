@@ -1,0 +1,40 @@
+# General
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage*
+coverage.xml
+.venv/
+venv/
+.env
+
+# CMake / C++ builds
+**/build/
+**/CMakeFiles/
+**/CMakeCache.txt
+**/Makefile
+**/cmake_install.cmake
+**/*.a
+**/*.o
+**/*.d
+**/*.pc
+**/_deps/
+**/compile_commands.json
+**/Testing/
+
+# Demo outputs
+demo/output/
+
+# Logs
+*.log
+
+

@@ -1,0 +1,29 @@
+{
+  "context": {
+    "date": "2025-01-01",
+    "host_name": "ci-runner",
+    "executable": "bench",
+    "cpu_scaling_enabled": false
+  },
+  "benchmarks": [
+    {
+      "name": "BM_AddVectors/1024",
+      "real_time": 100.0,
+      "cpu_time": 98.5,
+      "time_unit": "ns"
+    },
+    {
+      "name": "BM_AddVectors/65536",
+      "real_time": 3000.0,
+      "cpu_time": 2980.0,
+      "time_unit": "ns"
+    },
+    {
+      "name": "BM_Memcpy/1MB",
+      "bytes_per_second": 1.2e9,
+      "items_per_second": 1200.0
+    }
+  ]
+}
+
+
