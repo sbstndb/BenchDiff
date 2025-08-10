@@ -49,6 +49,17 @@ A minimal Google Benchmark demo is under `demo/cpp_bench`.
 - Analyze:
   - `python main.py --ref demo/output/baseline.json --cur demo/output/current.json --metric real_time`
 
+Project structure
+-----------------
+
+The project was refactored into three focused modules:
+
+- `compare.py`: core comparison logic and CI gating
+- `report.py`: terminal rendering (colors, tables, sections)
+- `cli.py`: argument parsing and orchestration
+
+The entry point `main.py` remains for backward-compatibility and delegates to `cli.py`.
+
 Example output
 --------------
 
