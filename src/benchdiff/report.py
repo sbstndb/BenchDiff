@@ -1,16 +1,14 @@
 """
-report.py
+report.py (package)
 
 Presentation and printing helpers for BenchDiff terminal output.
-
-Relies on color utilities and consumes data from compare.py.
 """
 
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Tuple
 
-from color_utils import (
+from .color_utils import (
     ansi,
     pad_ansi,
     colorize_direction,
@@ -19,7 +17,7 @@ from color_utils import (
     colorize_severity_label,
     classify_severity,
 )
-from compare import (
+from .compare import (
     Comparison,
     aggregate_series,
     _regression_magnitude_pct,
@@ -27,13 +25,11 @@ from compare import (
 )
 
 
-# Column widths (compact for half-screen terminals)
 NAME_COL_WIDTH = 48
 METRIC_COL_WIDTH = 16
 KERNEL_COL_WIDTH = 48
 DIR_COL_WIDTH = 12
 
-# Default sizes for Top lists
 TOP_REG_COUNT = 6
 TOP_IMP_COUNT = 6
 
@@ -52,10 +48,6 @@ def _print_aggregated_header() -> None:
 def _format_aggregated_cells(
     a: Dict[str, Any], *, thresholds: Dict[str, float], color_enabled: bool
 ) -> Tuple[str, str, str, str, str]:
-    """Return (mean_cell, min_cell, max_cell, dir_cell, sev_cell) formatted/padded.
-
-    The kernel name cell is handled by the caller due to variable width formatting.
-    """
     if a["aggregated_direction"] == "regression":
         sev_for_label = (
             a["aggregated_severity"] if isinstance(a["aggregated_severity"], str) else "none"
@@ -129,7 +121,6 @@ def _print_section(title: str, *, color_enabled: bool, bold_if_no_color: bool = 
 
 
 def print_section(title: str, *, color_enabled: bool, bold_if_no_color: bool = True) -> None:
-    """Public wrapper to print a styled section header (reuses local implementation)."""
     _print_section(title, color_enabled=color_enabled, bold_if_no_color=bold_if_no_color)
 
 
@@ -219,7 +210,6 @@ def print_top_entries(
     regs = [c for c in comparisons if c.direction == "regression"]
     imps = [c for c in comparisons if c.direction == "improvement"]
 
-    # Worst regressions first
     regs_sorted = sorted(regs, key=_regression_magnitude_pct, reverse=True)
     reg_iter = regs_sorted if show_all else regs_sorted[:TOP_REG_COUNT]
     for c in reg_iter:
@@ -228,7 +218,6 @@ def print_top_entries(
             8,
             align="right",
         )
-        # Symmetric display severity for direction column
         mag_pct_disp = abs(c.relative_change or 0.0) * 100.0
         sev_for_dir = (
             classify_severity(mag_pct_disp, thresholds)
@@ -250,7 +239,6 @@ def print_top_entries(
 
     print("-" * len(header))
 
-    # Best improvements
     n_imp = top_imp if top_imp is not None else TOP_IMP_COUNT
     imp_base = sorted(imps, key=_improvement_magnitude_pct, reverse=True)
     imp_selected = imp_base if show_all else imp_base[:n_imp]

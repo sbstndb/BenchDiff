@@ -1,10 +1,7 @@
 """
-cli.py
+cli.py (package)
 
 Command-line interface wiring for BenchDiff.
-
-Parses arguments, loads JSONs, orchestrates comparison and reporting, and
-handles CI gating exit codes.
 """
 
 from __future__ import annotations
@@ -15,14 +12,14 @@ import re
 import sys
 from typing import Dict, Optional
 
-from color_utils import should_enable_color
-from compare import (
+from .color_utils import should_enable_color
+from .compare import (
     DEFAULT_THRESHOLDS,
     extract_benchmarks,
     load_json,
     evaluate_ci_gate,
 )
-from report import (
+from .report import (
     print_quick_summary,
     print_aggregated_top,
     print_aggregated_full,
@@ -54,7 +51,6 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         required=False,
         help="JSON string to override thresholds (minor_pct, moderate_pct, major_pct)",
     )
-    # CI gating options
     parser.add_argument(
         "--ci", action="store_true", help="Enable CI mode (non-zero exit code on gating failure)"
     )
@@ -72,7 +68,6 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         default=None,
         help="Fail if the worst regression magnitude exceeds this percentage (e.g., 10.0)",
     )
-    # Output control (local only)
     parser.add_argument(
         "--aggregate-only",
         action="store_true",
@@ -115,7 +110,6 @@ def run(argv: Optional[list[str]] = None) -> int:
             print(f"Invalid thresholds JSON: {e}", file=sys.stderr)
             return 2
 
-    # Decide whether to enable ANSI colors
     color_enabled = should_enable_color(no_color_flag=args.no_color, stream=sys.stdout)
 
     ref_json = load_json(args.ref)
@@ -124,7 +118,6 @@ def run(argv: Optional[list[str]] = None) -> int:
     ref_map = extract_benchmarks(ref_json)
     cur_map = extract_benchmarks(cur_json)
 
-    # Optional filtering by benchmark name (regex)
     if args.benchmark_filter:
         try:
             pattern = re.compile(args.benchmark_filter)
@@ -134,11 +127,10 @@ def run(argv: Optional[list[str]] = None) -> int:
         ref_map = {name: b for name, b in ref_map.items() if pattern.search(name)}
         cur_map = {name: b for name, b in cur_map.items() if pattern.search(name)}
 
-    from compare import compare_maps  # local import to avoid cycles in type checkers
+    from .compare import compare_maps  # late import to avoid cycles
 
     comparisons = compare_maps(ref_map, cur_map, args.metric, thresholds)
 
-    # Local display: quick summary + aggregated views
     print_quick_summary(comparisons, color_enabled=color_enabled)
 
     if args.aggregate_top:
@@ -158,7 +150,6 @@ def run(argv: Optional[list[str]] = None) -> int:
             comparisons, thresholds=thresholds, color_enabled=color_enabled
         )
 
-    # CI mode: apply gating rules and return an error code if necessary
     if args.ci:
         gate = evaluate_ci_gate(
             comparisons,

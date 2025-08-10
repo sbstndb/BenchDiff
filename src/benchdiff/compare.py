@@ -1,10 +1,7 @@
 """
-compare.py
+compare.py (package)
 
 Core comparison logic and data structures for BenchDiff.
-
-This module is pure logic (no printing/ANSI). It is imported by the CLI and
-reporting layers.
 """
 
 from __future__ import annotations
@@ -15,32 +12,22 @@ import statistics
 from dataclasses import dataclass, asdict
 from typing import Any, Dict, List, Optional, Tuple
 
-# Classification uses shared helpers from color_utils
-from color_utils import classify_severity
+from .color_utils import classify_severity
 
 
-# -------------------------
-# Configuration / thresholds
-# -------------------------
 DEFAULT_THRESHOLDS: Dict[str, float] = {
-    # For time-like metrics: percent increase means slower (bad).
-    # For throughput-like metrics: percent decrease is bad.
     "minor_pct": 2.0,
     "moderate_pct": 5.0,
     "major_pct": 10.0,
 }
 
-# Metrics where larger is better (decrease is a regression)
 THROUGHPUT_METRICS = {"bytes_per_second", "items_per_second"}
 
 
-# -------------------------
-# Data structures
-# -------------------------
 @dataclass
 class BenchEntry:
     name: str
-    metric: str  # which field we use, e.g. "real_time"
+    metric: str
     value: float
     time_unit: Optional[str] = None
     extra: Optional[Dict[str, Any]] = None
@@ -52,25 +39,20 @@ class Comparison:
     metric: str
     ref_value: float
     cur_value: float
-    pct_change: Optional[float]  # positive = increase ((cur-ref)/ref *100)
-    direction: str  # "regression"|"improvement"|"unchanged"
-    severity: str  # none/minor/moderate/major
+    pct_change: Optional[float]
+    direction: str
+    severity: str
     time_unit: Optional[str]
     notes: Optional[str]
-    # unit-less fraction: +0.5 == +50%
     relative_change: Optional[float] = None
 
 
-# -------------------------
-# Load & parse
-# -------------------------
 def load_json(path: str) -> Any:
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
 def extract_benchmarks(json_obj: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
-    """Return a mapping name->benchmark from a Google Benchmark JSON (or list)."""
     arr = (
         json_obj.get("benchmarks")
         if isinstance(json_obj, dict) and isinstance(json_obj.get("benchmarks"), list)
@@ -86,10 +68,8 @@ def extract_benchmarks(json_obj: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
 
 
 def choose_metric_for_benchmark(
-    bench_obj: Dict[str, Any],
-    prefer: Optional[str] = None,
+    bench_obj: Dict[str, Any], prefer: Optional[str] = None
 ) -> Tuple[str, Optional[str], float]:
-    """Return (metric_field, time_unit, value) honoring an optional preference."""
     time_unit = bench_obj.get("time_unit")
     candidates = ([prefer] if prefer else []) + [
         "real_time",
@@ -108,9 +88,6 @@ def choose_metric_for_benchmark(
     raise ValueError(f"Could not find a known metric in benchmark {bench_obj.get('name')}")
 
 
-# -------------------------
-# Comparison logic
-# -------------------------
 def compare_maps(
     ref_map: Dict[str, Dict[str, Any]],
     cur_map: Dict[str, Dict[str, Any]],
@@ -123,10 +100,13 @@ def compare_maps(
         ref = ref_map[name]
         cur = cur_map[name]
         try:
-            metric_field_ref, time_unit_ref, ref_val = choose_metric_for_benchmark(ref, metric_preference)
-            _metric_field_cur, time_unit_cur, cur_val = choose_metric_for_benchmark(cur, metric_preference)
+            metric_field_ref, time_unit_ref, ref_val = choose_metric_for_benchmark(
+                ref, metric_preference
+            )
+            _metric_field_cur, time_unit_cur, cur_val = choose_metric_for_benchmark(
+                cur, metric_preference
+            )
         except ValueError as e:
-            # skip if metric missing
             out.append(
                 Comparison(
                     name,
@@ -144,7 +124,6 @@ def compare_maps(
 
         metric_field = metric_field_ref
 
-        # Compute percent change relative to reference
         if ref_val == 0:
             pct = None
             notes = "ref value is zero (cannot compute pct change)"
@@ -152,7 +131,6 @@ def compare_maps(
             pct = (cur_val - ref_val) / abs(ref_val) * 100.0
             notes = None
 
-        # Determine direction & severity (time-like: increase = regression; throughput-like: decrease = regression)
         def _direction_and_severity(metric_field: str, pct: Optional[float]) -> Tuple[str, str]:
             if pct is None:
                 return "unknown", "none"
@@ -180,18 +158,13 @@ def compare_maps(
                 notes=notes,
             )
         )
-    # sort: regressions first by decreasing pct_change (when available)
     return sorted(
         out,
         key=lambda c: (c.direction != "regression", -(c.pct_change or 0) if c.pct_change else 0),
     )
 
 
-# -------------------------
-# Aggregation across size-series
-# -------------------------
 def _split_kernel_and_size(bench_name: str) -> Tuple[str, Optional[int]]:
-    # Expect names like "BM_AddVectorsT<float>/1024" or "BM_AddVectorsT<int>/32"
     if "/" in bench_name:
         base, maybe_size = bench_name.rsplit("/", 1)
         if maybe_size.isdigit():
@@ -236,26 +209,18 @@ def aggregate_series(
                 "aggregated_severity": agg_sev,
             }
         )
-    # Sort from least favorable to most favorable according to mean (positive = regression, negative = improvement)
     return sorted(aggregates, key=lambda x: x["mean_relative_change"], reverse=True)
 
 
-# -------------------------
-# CI gating
-# -------------------------
 def _regression_magnitude_pct(c: Comparison) -> float:
-    """Return positive magnitude of a regression percentage (0 if NA)."""
     if c.direction != "regression" or c.pct_change is None:
         return 0.0
     return max(0.0, -c.pct_change) if c.metric in THROUGHPUT_METRICS else max(0.0, c.pct_change)
 
 
 def _improvement_magnitude_pct(c: Comparison) -> float:
-    """Return positive magnitude of an improvement percentage (0 if NA)."""
     if c.direction != "improvement" or c.pct_change is None:
         return 0.0
-    # time-like: improvement => pct negative -> magnitude positive = -pct
-    # throughput: improvement => pct positive -> magnitude positive = pct
     return max(0.0, c.pct_change) if c.metric in THROUGHPUT_METRICS else max(0.0, -c.pct_change)
 
 
