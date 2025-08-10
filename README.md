@@ -63,39 +63,10 @@ The entry point `main.py` remains for backward-compatibility and delegates to `c
 Example output
 --------------
 
-Short excerpt of the local terminal summary:
+Run the demo to generate fresh examples under `demo/output/` and compare them:
 
-```text
---- Quick Summary ---
-Total compared: 105  |  Regressions: 43  |  Improvements: 37
-
-Aggregated per-kernel (top by mean rel change):
-kernel                                                       |   n |     mean |      min |      max |          dir |      sev
-...
-```
-
-Naive diff (for comparison)
----------------------------
-
-A simple unified diff between the raw Google Benchmark JSON files is noisy and hard to act on:
-
-```diff
---- demo/output/baseline.json
-+++ demo/output/current.json
-@@ "benchmarks"[1]
--  "name": "BM_AddVectors_Large/65536",
--  "real_time": 6239.286587,
-+  "name": "BM_AddVectors_Large/65536",
-+  "real_time": 7893.413373,
-   "time_unit": "ns"
-@@ "benchmarks"[2]
--  "name": "BM_Memcpy_Chunked/1048576",
--  "bytes_per_second": 4.3174002757e+10
-+  "name": "BM_Memcpy_Chunked/1048576",
-+  "bytes_per_second": 4.1833883170e+10
-```
-
-BenchDiff surfaces direction, relative change, severity, and CI checks in a compact, actionable form.
+- `bash demo/run_demo.sh`
+- `python main.py --ref demo/output/baseline.json --cur demo/output/current.json --metric real_time`
 
 License
 -------
