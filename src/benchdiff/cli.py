@@ -10,7 +10,6 @@ import argparse
 import json
 import re
 import sys
-import os
 from typing import Dict, Optional
 
 from .color_utils import should_enable_color
@@ -19,6 +18,7 @@ from .compare import (
     extract_benchmarks,
     load_json,
     evaluate_ci_gate,
+    compare_maps,
 )
 from .report import (
     print_quick_summary,
@@ -148,8 +148,6 @@ def run(argv: Optional[list[str]] = None) -> int:
             return 2
         ref_map = {name: b for name, b in ref_map.items() if pattern.search(name)}
         cur_map = {name: b for name, b in cur_map.items() if pattern.search(name)}
-
-    from .compare import compare_maps  # late import to avoid cycles
 
     comparisons = compare_maps(ref_map, cur_map, args.metric, thresholds)
 

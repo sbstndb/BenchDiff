@@ -1,7 +1,7 @@
-"""BenchDiff package."""
+"""BenchDiff - Ultra-concise performance regression reporting for Google Benchmark traces."""
 
-from .cli import run  # re-export for convenience
+__version__ = "0.1.0"
 
-__all__ = ["run"]
+from .cli import run
 
-
+__all__ = ["__version__", "run"]

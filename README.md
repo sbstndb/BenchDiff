@@ -20,17 +20,19 @@ Features
 Install
 -------
 
-- Python 3.10+
+```bash
+pip install benchdiff
+```
 
 Usage
 -----
 
 - Basic:
-  - `python main.py --ref baseline.json --cur current.json --metric real_time`
+  - `benchdiff --ref baseline.json --cur current.json --metric real_time`
 - CI gate:
-  - `python main.py --ref baseline.json --cur current.json --metric real_time --ci --ci-fail-on major --ci-max-top-reg-pct 10`
+  - `benchdiff --ref baseline.json --cur current.json --metric real_time --ci --ci-fail-on major --ci-max-top-reg-pct 10`
 - Filter benchmarks by name (regex, similar to Google Benchmark `--benchmark_filter`):
-  - `python main.py --ref baseline.json --cur current.json --benchmark-filter "^BM_AddVectorsT<.*>/[0-9]+$"`
+  - `benchdiff --ref baseline.json --cur current.json --benchmark-filter "^BM_AddVectorsT<.*>/[0-9]+$"`
 
 Demo (C++ microbenchmarks)
 --------------------------
@@ -47,18 +49,17 @@ A minimal Google Benchmark demo is under `demo/cpp_bench`.
   - `demo/cpp_bench/build/bench_demo --benchmark_out=demo/output/current.json  --benchmark_out_format=json`
 
 - Analyze:
-  - `python main.py --ref demo/output/baseline.json --cur demo/output/current.json --metric real_time`
+  - `benchdiff --ref demo/output/baseline.json --cur demo/output/current.json --metric real_time`
 
 Project structure
 -----------------
 
-The project was refactored into three focused modules:
+The project is organized into focused modules under `src/benchdiff/`:
 
 - `compare.py`: core comparison logic and CI gating
 - `report.py`: terminal rendering (colors, tables, sections)
 - `cli.py`: argument parsing and orchestration
-
-The entry point `main.py` remains for backward-compatibility and delegates to `cli.py`.
+- `color_utils.py`: ANSI color utilities
 
 Example output
 --------------
@@ -66,9 +67,9 @@ Example output
 Run the demo to generate fresh examples under `demo/output/` and compare them:
 
 - `bash demo/run_demo.sh`
-- `python main.py --ref demo/output/baseline.json --cur demo/output/current.json --metric real_time`
+- `benchdiff --ref demo/output/baseline.json --cur demo/output/current.json --metric real_time`
 
 License
 -------
 
-MIT
+BSD 3-Clause
