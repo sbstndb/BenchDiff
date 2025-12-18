@@ -1,21 +1,25 @@
 BenchDiff
 ===========
 
-![Aperçu de la sortie console de BenchDiff](media/screenshot.png)
+**BenchDiff** is a visual tool for spotting performance regressions and improvements in [Google Benchmark](https://github.com/google/benchmark) traces.
 
- Ultra-concise performance regression reporting for Google Benchmark traces (local summary only).
+Unlike the `compare.py` script bundled with Google Benchmark, BenchDiff provides:
+- **Clear visual output** with severity-based coloring (minor/moderate/major)
+- **Per-kernel aggregation** to easily analyze templated benchmarks (e.g., `BM_Add<float>/1024`, `BM_Add<float>/2048`...)
+- **Concise summary** of top regressions and improvements
 
-- Input: two JSON traces (reference vs current)
-- Output: terse regression analysis (bullets + compact JSON) and a small local summary
-- Use-cases: PR gating, CI checks, quick diagnosis of perf drifts
+Designed for local development: run, compare, instantly see what changed.
+
+![BenchDiff console output](media/screenshot.png)
 
 Features
 --------
 
-- Auto-metric pick: `real_time`, `cpu_time`, `bytes_per_second`, `items_per_second`
-- Regression classification (minor/moderate/major) with configurable thresholds
-- Local terminal summary with ANSI colors
-- CI mode (`--ci`) with fail-on-severity and max-top-regression limits
+- **Input**: two JSON traces from Google Benchmark (reference vs current)
+- **Auto-metric selection**: `real_time`, `cpu_time`, `bytes_per_second`, `items_per_second`
+- **Regression classification** with configurable thresholds (minor/moderate/major)
+- **ANSI colors** for quick visual scanning
+- **CI mode** (`--ci`) with fail-on-severity and exit codes for automation
 
 Install
 -------
