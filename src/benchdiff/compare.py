@@ -88,6 +88,36 @@ def choose_metric_for_benchmark(
     raise ValueError(f"Could not find a known metric in benchmark {bench_obj.get('name')}")
 
 
+def classify_direction_and_severity(
+    metric_field: str,
+    pct: Optional[float],
+    thresholds: Dict[str, float],
+) -> Tuple[str, str]:
+    """Classify direction and severity based on percentage change.
+
+    Handles sign inversion for throughput metrics (higher is better).
+
+    Args:
+        metric_field: The metric being compared (e.g., 'real_time', 'bytes_per_second').
+        pct: Percentage change from reference to current value, or None if unavailable.
+        thresholds: Dict with 'minor_pct', 'moderate_pct', 'major_pct' keys.
+
+    Returns:
+        Tuple of (direction, severity) where:
+        - direction: 'regression', 'improvement', 'unchanged', or 'unknown'
+        - severity: 'minor', 'moderate', 'major', or 'none'
+    """
+    if pct is None:
+        return "unknown", "none"
+    sign = -1 if metric_field in THROUGHPUT_METRICS else 1
+    signed_pct = sign * pct
+    if signed_pct > thresholds["minor_pct"]:
+        return "regression", classify_severity(signed_pct, thresholds)
+    if signed_pct < -thresholds["minor_pct"]:
+        return "improvement", "none"
+    return "unchanged", "none"
+
+
 def compare_maps(
     ref_map: Dict[str, Dict[str, Any]],
     cur_map: Dict[str, Dict[str, Any]],
@@ -131,18 +161,7 @@ def compare_maps(
             pct = (cur_val - ref_val) / abs(ref_val) * 100.0
             notes = None
 
-        def _direction_and_severity(metric_field: str, pct: Optional[float]) -> Tuple[str, str]:
-            if pct is None:
-                return "unknown", "none"
-            sign = -1 if metric_field in THROUGHPUT_METRICS else 1
-            signed_pct = sign * pct
-            if signed_pct > thresholds["minor_pct"]:
-                return "regression", classify_severity(signed_pct, thresholds)
-            if signed_pct < -thresholds["minor_pct"]:
-                return "improvement", "none"
-            return "unchanged", "none"
-
-        direction, severity = _direction_and_severity(metric_field, pct)
+        direction, severity = classify_direction_and_severity(metric_field, pct, thresholds)
 
         out.append(
             Comparison(
@@ -269,6 +288,7 @@ __all__ = [
     "load_json",
     "extract_benchmarks",
     "choose_metric_for_benchmark",
+    "classify_direction_and_severity",
     "compare_maps",
     "aggregate_series",
     "_regression_magnitude_pct",

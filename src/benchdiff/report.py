@@ -33,6 +33,9 @@ DIR_COL_WIDTH = 12
 TOP_REG_COUNT = 6
 TOP_IMP_COUNT = 6
 
+AGGREGATED_TOP_LIMIT = 10
+AGGREGATED_FULL_LIMIT = 30
+
 AGGREGATED_TABLE_HEADER = (
     f"{'kernel':{KERNEL_COL_WIDTH}} | {'n':>3} | {'mean':>8} | {'min':>8} | {'max':>8} | "
     f"{'direction':>{DIR_COL_WIDTH}} | {'severity':>8}"
@@ -156,39 +159,49 @@ def print_quick_summary(
     print(table_rule)
 
 
-def print_aggregated_top(
-    comparisons: List[Comparison], *, thresholds: Dict[str, float], color_enabled: bool
+def _print_aggregated_table(
+    comparisons: List[Comparison],
+    *,
+    thresholds: Dict[str, float],
+    color_enabled: bool,
+    limit: int,
+    title: str,
 ) -> None:
+    """Print an aggregated per-kernel table with the given limit and title."""
     aggs = aggregate_series(comparisons, thresholds=thresholds)
-    _print_section(
-        "Aggregated per-kernel (top by mean rel change)", color_enabled=color_enabled
-    )
+    _print_section(title, color_enabled=color_enabled)
     _print_aggregated_header()
-    for a in aggs[:10]:
+    for a in aggs[:limit]:
         mean_cell, min_cell, max_cell, dir_cell, sev_cell = _format_aggregated_cells(
             a, thresholds=thresholds, color_enabled=color_enabled
         )
         print(
             f"{a['kernel']:{KERNEL_COL_WIDTH}} | {a['count']:>3} | {mean_cell} | {min_cell} | {max_cell} | {dir_cell} | {sev_cell}"
         )
+
+
+def print_aggregated_top(
+    comparisons: List[Comparison], *, thresholds: Dict[str, float], color_enabled: bool
+) -> None:
+    _print_aggregated_table(
+        comparisons,
+        thresholds=thresholds,
+        color_enabled=color_enabled,
+        limit=AGGREGATED_TOP_LIMIT,
+        title="Aggregated per-kernel (top by mean rel change)",
+    )
 
 
 def print_aggregated_full(
     comparisons: List[Comparison], *, thresholds: Dict[str, float], color_enabled: bool
 ) -> None:
-    aggs = aggregate_series(comparisons, thresholds=thresholds)
-    _print_section(
-        "Aggregated per-kernel view (mean/min/max relative change)",
+    _print_aggregated_table(
+        comparisons,
+        thresholds=thresholds,
         color_enabled=color_enabled,
+        limit=AGGREGATED_FULL_LIMIT,
+        title="Aggregated per-kernel view (mean/min/max relative change)",
     )
-    _print_aggregated_header()
-    for a in aggs[:30]:
-        mean_cell, min_cell, max_cell, dir_cell, sev_cell = _format_aggregated_cells(
-            a, thresholds=thresholds, color_enabled=color_enabled
-        )
-        print(
-            f"{a['kernel']:{KERNEL_COL_WIDTH}} | {a['count']:>3} | {mean_cell} | {min_cell} | {max_cell} | {dir_cell} | {sev_cell}"
-        )
 
 
 def print_top_entries(
@@ -278,6 +291,8 @@ __all__ = [
     "DIR_COL_WIDTH",
     "TOP_REG_COUNT",
     "TOP_IMP_COUNT",
+    "AGGREGATED_TOP_LIMIT",
+    "AGGREGATED_FULL_LIMIT",
     "print_section",
     "print_quick_summary",
     "print_aggregated_top",
