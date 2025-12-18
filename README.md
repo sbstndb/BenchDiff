@@ -41,12 +41,36 @@ pip install -e .
 Usage
 -----
 
-- Basic:
-  - `benchdiff --ref baseline.json --cur current.json --metric real_time`
-- CI gate:
-  - `benchdiff --ref baseline.json --cur current.json --metric real_time --ci --ci-fail-on major --ci-max-top-reg-pct 10`
-- Filter benchmarks by name (regex, similar to Google Benchmark `--benchmark_filter`):
-  - `benchdiff --ref baseline.json --cur current.json --benchmark-filter "^BM_AddVectorsT<.*>/[0-9]+$"`
+**Basic:**
+```bash
+benchdiff --ref baseline.json --cur current.json --metric real_time
+```
+
+**Aggregated view only** (per-kernel summary, ideal for templated benchmarks):
+```bash
+benchdiff --ref baseline.json --cur current.json --aggregate-only
+```
+
+**CI gate** (exit code 4 on failure):
+```bash
+benchdiff --ref baseline.json --cur current.json --ci --ci-fail-on major --ci-max-top-reg-pct 10
+```
+
+**Filter benchmarks** by name (regex, same as Google Benchmark `--benchmark_filter`):
+```bash
+benchdiff --ref baseline.json --cur current.json --benchmark-filter "^BM_AddVectorsT<.*>/[0-9]+$"
+```
+
+**Custom thresholds** (default: minor=2%, moderate=5%, major=10%):
+```bash
+benchdiff --ref baseline.json --cur current.json --thresholds '{"minor_pct": 1.0, "moderate_pct": 3.0, "major_pct": 5.0}'
+```
+
+**Output options:**
+```bash
+benchdiff --ref baseline.json --cur current.json --no-color      # disable ANSI colors
+benchdiff --ref baseline.json --cur current.json --show-all      # show all entries (no truncation)
+```
 
 Demo (C++ microbenchmarks)
 --------------------------
