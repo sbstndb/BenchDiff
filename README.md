@@ -5,21 +5,10 @@ BenchDiff
 
 Unlike the `compare.py` script bundled with Google Benchmark, BenchDiff provides:
 - **Clear visual output** with severity-based coloring (minor/moderate/major)
-- **Per-kernel aggregation** to easily analyze templated benchmarks (e.g., `BM_Add<float>/1024`, `BM_Add<float>/2048`...)
-- **Concise summary** of top regressions and improvements
-
-Designed for local development: run, compare, instantly see what changed.
+- **Per-kernel aggregation** to easily analyze templated benchmarks
+- **CI mode** with configurable thresholds and exit codes
 
 ![BenchDiff console output](media/screenshot.png)
-
-Features
---------
-
-- **Input**: two JSON traces from Google Benchmark (reference vs current)
-- **Auto-metric selection**: `real_time`, `cpu_time`, `bytes_per_second`, `items_per_second`
-- **Regression classification** with configurable thresholds (minor/moderate/major)
-- **ANSI colors** for quick visual scanning
-- **CI mode** (`--ci`) with fail-on-severity and exit codes for automation
 
 Install
 -------
@@ -30,90 +19,33 @@ Requires Python 3.10+
 pip install benchdiff
 ```
 
-Or from source:
+Quick Start
+-----------
 
 ```bash
-git clone https://github.com/sbstndb/BenchDiff.git
-cd BenchDiff
-pip install -e .
-```
+# Basic comparison
+benchdiff --ref baseline.json --cur current.json
 
-Usage
------
-
-**Basic:**
-```bash
-benchdiff --ref baseline.json --cur current.json --metric real_time
-```
-
-**Aggregated view only** (per-kernel summary, ideal for templated benchmarks):
-```bash
+# Aggregated view (per-kernel summary)
 benchdiff --ref baseline.json --cur current.json --aggregate-only
+
+# CI mode (exit 4 on major regression)
+benchdiff --ref baseline.json --cur current.json --ci --ci-fail-on major
 ```
 
-**CI gate** (exit code 4 on failure):
-```bash
-benchdiff --ref baseline.json --cur current.json --ci --ci-fail-on major --ci-max-top-reg-pct 10
-```
-
-**Filter benchmarks** by name (regex, same as Google Benchmark `--benchmark_filter`):
-```bash
-benchdiff --ref baseline.json --cur current.json --benchmark-filter "^BM_AddVectorsT<.*>/[0-9]+$"
-```
-
-**Custom thresholds** (default: minor=2%, moderate=5%, major=10%):
-```bash
-benchdiff --ref baseline.json --cur current.json --thresholds '{"minor_pct": 1.0, "moderate_pct": 3.0, "major_pct": 5.0}'
-```
-
-**Output options:**
-```bash
-benchdiff --ref baseline.json --cur current.json --no-color      # disable ANSI colors
-benchdiff --ref baseline.json --cur current.json --show-all      # show all entries (no truncation)
-```
-
-Demo (C++ microbenchmarks)
---------------------------
-
-A minimal Google Benchmark demo is under `demo/cpp_bench`.
-
-- Build:
-  - `cmake -S demo/cpp_bench -B demo/cpp_bench/build -DCMAKE_BUILD_TYPE=Release`
-  - `cmake --build demo/cpp_bench/build -j`
-
-- Produce traces:
-  - `mkdir -p demo/output`
-  - `demo/cpp_bench/build/bench_demo --benchmark_out=demo/output/baseline.json --benchmark_out_format=json`
-  - `demo/cpp_bench/build/bench_demo --benchmark_out=demo/output/current.json  --benchmark_out_format=json`
-
-- Analyze:
-  - `benchdiff --ref demo/output/baseline.json --cur demo/output/current.json --metric real_time`
-
-Project structure
------------------
-
-The project is organized into focused modules under `src/benchdiff/`:
-
-- `compare.py`: core comparison logic and CI gating
-- `report.py`: terminal rendering (colors, tables, sections)
-- `cli.py`: argument parsing and orchestration
-- `color_utils.py`: ANSI color utilities
-
-Example output
---------------
-
-Quick test with included sample data:
+Try with included sample data:
 
 ```bash
-benchdiff --ref demo/baseline_O2.json --cur demo/current_O3_native.json --metric real_time
+benchdiff --ref demo/baseline_O2.json --cur demo/current_O3_native.json
 ```
 
-Or generate fresh traces with the C++ demo:
+Documentation
+-------------
 
-```bash
-bash demo/run_demo.sh
-benchdiff --ref demo/output/baseline.json --cur demo/output/current.json --metric real_time
-```
+See the [docs](docs/) folder for detailed documentation:
+
+- [Usage Guide](docs/usage.md) — CLI options and examples
+- [Development](docs/development.md) — Architecture, API, contributing
 
 License
 -------
