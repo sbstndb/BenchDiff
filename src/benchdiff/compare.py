@@ -241,7 +241,7 @@ def evaluate_ci_gate(
             worst_mag, worst = mag, c
         if severity_rank.get(c.severity, 0) >= threshold_rank:
             reasons.append(
-                f"severité>={fail_on_severity}: {c.name} ({c.metric}) {c.pct_change:+.2f}%"
+                f"severity>={fail_on_severity}: {c.name} ({c.metric}) {c.pct_change:+.2f}%"
             )
 
     if max_top_reg_pct is not None and worst_mag >= max_top_reg_pct:

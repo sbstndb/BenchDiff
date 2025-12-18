@@ -1,13 +1,13 @@
 """
 color_utils.py
 
-Utilitaires centralisés pour la coloration ANSI et la mise en forme
-des sorties liées aux régressions/améliorations de performances.
+Centralized utilities for ANSI coloring and formatting of outputs
+related to performance regressions/improvements.
 
-Objectifs:
-- Une seule implémentation pour les couleurs et le padding ANSI
-- Paramétrage explicite via thresholds fournis par l'appelant
-- Activation/désactivation automatique (TTY, NO_COLOR) ou via flag
+Objectives:
+- A single implementation for ANSI colors and padding
+- Explicit configuration via thresholds provided by the caller
+- Automatic activation/deactivation (TTY, NO_COLOR) or via flag
 """
 
 from __future__ import annotations
@@ -18,22 +18,22 @@ import sys
 from typing import Dict, Optional
 
 
-# Regex pour supprimer les séquences ANSI
+# Regex to strip ANSI sequences
 ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
 
-# Palette unifiée (symétrique) par sévérité et direction
-# - regression: minor=jaune (33), moderate=rouge (31), major=rouge vif (91)
-# - improvement: minor=vert (32), moderate=vert vif (92), major=vert vif gras (1;92)
+# Unified (symmetric) color palette by severity and direction
+# - regression: minor=yellow (33), moderate=red (31), major=bright red (91)
+# - improvement: minor=green (32), moderate=bright green (92), major=bold bright green (1;92)
 SEVERITY_COLOR = {
     "regression": {"minor": "33", "moderate": "31", "major": "1;91"},
     "improvement": {"minor": "32", "moderate": "92", "major": "1;92"},
 }
-NEUTRAL_COLOR = "90"  # gris pour NA / none / unchanged / unknown
-NEUTRAL_CHANGE_COLOR = "36"  # cyan pour changements ~neutres (sous seuil)
+NEUTRAL_COLOR = "90"  # gray for NA / none / unchanged / unknown
+NEUTRAL_CHANGE_COLOR = "36"  # cyan for ~neutral changes (below threshold)
 
 
 def should_enable_color(no_color_flag: bool = False, stream = sys.stdout) -> bool:
-    """Détermine si les couleurs ANSI doivent être activées (flag, NO_COLOR, TTY)."""
+    """Determines whether ANSI colors should be enabled (flag, NO_COLOR, TTY)."""
     if no_color_flag or os.environ.get("NO_COLOR") is not None:
         return False
     try:
@@ -47,19 +47,19 @@ def strip_ansi(text: str) -> str:
 
 
 def ansi(color_code: str, text: str, *, enabled: bool = True) -> str:
-    """Applique le code ANSI si enabled=True, sinon retourne text brut."""
+    """Applies ANSI code if enabled=True, otherwise returns plain text."""
     return text if not enabled else f"\033[{color_code}m{text}\033[0m"
 
 
 def pad_ansi(colored_text: str, width: int, *, align: str = "right") -> str:
-    """Pad une chaîne potentiellement colorée ANSI à une largeur fixe (align left/right)."""
+    """Pads a potentially ANSI-colored string to a fixed width (align left/right)."""
     visible_len = len(strip_ansi(colored_text))
     pad = max(0, width - visible_len)
     return colored_text + (" " * pad) if align == "left" else (" " * pad) + colored_text
 
 
 def classify_severity(magnitude_pct: float, thresholds: Dict[str, float]) -> str:
-    """Classe la sévérité d'une régression en fonction d'un pourcentage positif."""
+    """Classifies regression severity based on a positive percentage."""
     return (
         "major" if magnitude_pct >= thresholds["major_pct"]
         else "moderate" if magnitude_pct >= thresholds["moderate_pct"]
@@ -73,7 +73,7 @@ def _severity_color(direction: str, severity: str) -> str:
 
 
 def colorize_direction(direction: str, severity: str, *, enabled: bool = True) -> str:
-    """Colorise le libellé de direction: regression/improvement/unchanged/unknown."""
+    """Colorizes the direction label: regression/improvement/unchanged/unknown."""
     if direction in {"regression", "improvement"}:
         sev = severity if (direction == "regression" or severity in {"minor", "moderate", "major"}) else "minor"
         return ansi(_severity_color(direction, sev), direction, enabled=enabled)
@@ -81,7 +81,7 @@ def colorize_direction(direction: str, severity: str, *, enabled: bool = True) -
 
 
 def colorize_severity_label(severity: str, direction: str, *, enabled: bool = True) -> str:
-    """Colorise l'étiquette de sévérité selon la direction."""
+    """Colorizes the severity label according to the direction."""
     return (
         ansi(NEUTRAL_COLOR, severity, enabled=enabled)
         if severity not in {"minor", "moderate", "major"}
@@ -90,13 +90,13 @@ def colorize_severity_label(severity: str, direction: str, *, enabled: bool = Tr
 
 
 def colorize_rel_change(value: Optional[float], *, thresholds: Dict[str, float], enabled: bool = True) -> str:
-    """Colorise un changement relatif (ex: +0.123 -> +12.3%) avec palette symétrique.
+    """Colorizes a relative change (e.g., +0.123 -> +12.3%) with symmetric palette.
 
-    Convention (temps-like):
-    - value > 0: régression (code rouge/jaune selon sévérité)
-    - value < 0: amélioration (code vert selon sévérité)
-    - |value| < minor_pct: couleur neutre (cyan)
-    - value == 0: couleur neutre (cyan)
+    Convention (time-like metrics):
+    - value > 0: regression (red/yellow code based on severity)
+    - value < 0: improvement (green code based on severity)
+    - |value| < minor_pct: neutral color (cyan)
+    - value == 0: neutral color (cyan)
     """
     if value is None:
         return "NA"
@@ -114,7 +114,7 @@ def colorize_rel_change(value: Optional[float], *, thresholds: Dict[str, float],
 
 
 def fit_text(text: Optional[str], width: int) -> str:
-    """Tronque/étend le texte à largeur fixe (sans couleur)."""
+    """Truncates/extends text to fixed width (without color)."""
     if text is None:
         return "".ljust(width)
     if len(text) <= width:
@@ -122,5 +122,3 @@ def fit_text(text: Optional[str], width: int) -> str:
     if width <= 3:
         return text[:width]
     return text[: width - 3] + "..."
-
-

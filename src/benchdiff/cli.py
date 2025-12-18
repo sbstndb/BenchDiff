@@ -181,7 +181,7 @@ def run(argv: Optional[list[str]] = None) -> int:
         print("-------")
         print(json.dumps(gate, indent=2))
         if gate["failed"]:
-            print("CI gating: échec des règles de régression.", file=sys.stderr)
+            print("CI gating: regression rules failed.", file=sys.stderr)
             return 4
 
     return 0
