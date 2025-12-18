@@ -10,6 +10,7 @@ import argparse
 import json
 import re
 import sys
+import os
 from typing import Dict, Optional
 
 from .color_utils import should_enable_color
@@ -112,8 +113,29 @@ def run(argv: Optional[list[str]] = None) -> int:
 
     color_enabled = should_enable_color(no_color_flag=args.no_color, stream=sys.stdout)
 
-    ref_json = load_json(args.ref)
-    cur_json = load_json(args.cur)
+    def _load_input_json(path: str, label: str):
+        try:
+            return load_json(path)
+        except FileNotFoundError:
+            print(f"{label} file not found: {path}", file=sys.stderr)
+            print(
+                "Hint: provide an absolute path or use demo outputs under demo/output (see README)",
+                file=sys.stderr,
+            )
+            return None
+        except json.JSONDecodeError as e:
+            print(f"Invalid {label} JSON at {path}: {e}", file=sys.stderr)
+            return None
+        except OSError as e:
+            print(f"Failed to read {label} at {path}: {e}", file=sys.stderr)
+            return None
+
+    ref_json = _load_input_json(args.ref, "Reference")
+    if ref_json is None:
+        return 2
+    cur_json = _load_input_json(args.cur, "Current")
+    if cur_json is None:
+        return 2
 
     ref_map = extract_benchmarks(ref_json)
     cur_map = extract_benchmarks(cur_json)
