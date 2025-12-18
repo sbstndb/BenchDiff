@@ -20,8 +20,18 @@ Features
 Install
 -------
 
+Requires Python 3.10+
+
 ```bash
 pip install benchdiff
+```
+
+Or from source:
+
+```bash
+git clone https://github.com/sbstndb/BenchDiff.git
+cd BenchDiff
+pip install -e .
 ```
 
 Usage
@@ -64,10 +74,18 @@ The project is organized into focused modules under `src/benchdiff/`:
 Example output
 --------------
 
-Run the demo to generate fresh examples under `demo/output/` and compare them:
+Quick test with included sample data:
 
-- `bash demo/run_demo.sh`
-- `benchdiff --ref demo/output/baseline.json --cur demo/output/current.json --metric real_time`
+```bash
+benchdiff --ref demo/baseline_O2.json --cur demo/current_O3_native.json --metric real_time
+```
+
+Or generate fresh traces with the C++ demo:
+
+```bash
+bash demo/run_demo.sh
+benchdiff --ref demo/output/baseline.json --cur demo/output/current.json --metric real_time
+```
 
 License
 -------
